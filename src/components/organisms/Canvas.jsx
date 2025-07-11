@@ -144,12 +144,44 @@ const handleZoneDragOver = (e) => {
     }
   };
 
-  // Handle canvas panning
+// Handle canvas panning
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+
   const handleCanvasMouseDown = (e) => {
-    if (e.target === canvasRef.current) {
-      // Start panning
+    if (e.target === canvasRef.current || e.target.closest('.canvas-background')) {
+      setIsPanning(true);
+      setLastMousePos({ x: e.clientX, y: e.clientY });
+      e.preventDefault();
     }
   };
+
+  const handleCanvasMouseMove = (e) => {
+    if (isPanning && onPanChange) {
+      const deltaX = e.clientX - lastMousePos.x;
+      const deltaY = e.clientY - lastMousePos.y;
+      onPanChange(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      setLastMousePos({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleCanvasMouseUp = () => {
+    setIsPanning(false);
+  };
+
+  useEffect(() => {
+    if (isPanning) {
+      document.addEventListener('mousemove', handleCanvasMouseMove);
+      document.addEventListener('mouseup', handleCanvasMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleCanvasMouseMove);
+        document.removeEventListener('mouseup', handleCanvasMouseUp);
+      };
+    }
+  }, [isPanning, lastMousePos]);
 
   const getZoneFromPosition = (x, y) => {
     const zones = [
@@ -175,37 +207,56 @@ const handleZoneDragOver = (e) => {
     return null;
   };
 
-  return (
+return (
     <div className={cn("relative flex-1 overflow-hidden bg-white", className)}>
-      {/* Canvas */}
-      <motion.div
-        ref={canvasRef}
-        className="canvas-grid relative w-full h-full cursor-grab active:cursor-grabbing"
-        style={{
-          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-          transformOrigin: "0 0",
-        }}
+      {/* Canvas Container */}
+      <div 
+        className="relative w-full h-full overflow-hidden"
         onMouseDown={handleCanvasMouseDown}
-        onDrop={(e) => {
-          const zone = getZoneFromPosition(
-            (e.clientX - canvasRef.current.getBoundingClientRect().left - pan.x) / zoom,
-            (e.clientY - canvasRef.current.getBoundingClientRect().top - pan.y) / zoom
-          );
-          if (zone) {
-            handleZoneDrop(e, zone);
-          }
-}}
-        onDragOver={handleZoneDragOver}
-        onDrop={(e) => {
-          const zone = getZoneFromPosition(
-            (e.clientX - canvasRef.current.getBoundingClientRect().left - pan.x) / zoom,
-            (e.clientY - canvasRef.current.getBoundingClientRect().top - pan.y) / zoom
-          );
-          if (zone) {
-            handleZoneDrop(e, zone);
-          }
-        }}
+        style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
       >
+        {/* Canvas Background */}
+        <div
+          className={cn(
+            "canvas-background absolute inset-0",
+            viewMode === "grid" && "canvas-grid",
+            viewMode === "sections" && "canvas-sections"
+          )}
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: "0 0",
+            width: `${canvasSize.width}px`,
+            height: `${canvasSize.height}px`,
+          }}
+        />
+        
+        {/* Canvas Content */}
+        <motion.div
+          ref={canvasRef}
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: "0 0",
+          }}
+        >
+          <div
+            className="relative pointer-events-auto"
+            style={{
+              width: `${canvasSize.width}px`,
+              height: `${canvasSize.height}px`,
+            }}
+            onDrop={(e) => {
+              const rect = canvasRef.current.getBoundingClientRect();
+              const zone = getZoneFromPosition(
+                (e.clientX - rect.left - pan.x) / zoom,
+                (e.clientY - rect.top - pan.y) / zoom
+              );
+              if (zone) {
+                handleZoneDrop(e, zone);
+              }
+            }}
+            onDragOver={handleZoneDragOver}
+          >
         {/* Zones */}
         <CanvasZones
           canvasSize={canvasSize}
@@ -339,8 +390,10 @@ const handleZoneDragOver = (e) => {
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           />
-        )}
-      </motion.div>
+)}
+          </div>
+        </motion.div>
+      </div>
 
       {/* Mini Map */}
 <div className="absolute bottom-4 right-4 z-20">

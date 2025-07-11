@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import Button from "@/components/atoms/Button";
 import ApperIcon from "@/components/ApperIcon";
-
 const CanvasToolbar = ({ 
   onCreateEntity, 
   onToggleView, 
@@ -12,6 +11,11 @@ const CanvasToolbar = ({
   onZoomOut,
   onResetView,
   onAutoArrange,
+  showGrid = false,
+  onToggleGrid,
+  showSections = true,
+  onToggleSections,
+  isPanning = false,
   className 
 }) => {
   return (
@@ -59,9 +63,40 @@ const CanvasToolbar = ({
               Auto Arrange
             </Button>
           </div>
+          
+          <div className="h-6 w-px bg-gray-300" />
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant={showGrid ? "primary" : "outline"}
+              onClick={onToggleGrid}
+              className="flex items-center gap-2"
+            >
+              <ApperIcon name="Grid3x3" className="w-4 h-4" />
+              Grid
+            </Button>
+            
+            <Button
+              variant={showSections ? "primary" : "outline"}
+              onClick={onToggleSections}
+              className="flex items-center gap-2"
+            >
+              <ApperIcon name="Layout" className="w-4 h-4" />
+              Sections
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+<div className="flex items-center gap-3">
+          {/* Pan Mode Indicator */}
+          {isPanning && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg border border-blue-200">
+              <ApperIcon name="Move" className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-700">Panning</span>
+            </div>
+          )}
+          
+          {/* Zoom Controls */}
           <div className="flex items-center gap-1 bg-white rounded-lg p-1 shadow-sm">
             <Button
               variant="ghost"

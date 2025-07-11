@@ -56,6 +56,14 @@ h1, h2, h3, h4, h5, h6 {
   background-size: 20px 20px;
 }
 
+.canvas-sections {
+  background: linear-gradient(135deg, rgba(249, 250, 251, 0.8) 0%, rgba(243, 244, 246, 0.9) 100%);
+}
+
+.canvas-background {
+  background: #fafafa;
+}
+
 .zone-gradient-operations {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.1) 100%);
   border: 2px dashed rgba(59, 130, 246, 0.3);
@@ -183,6 +191,14 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes magnetic-pulse {
   0%, 100% { transform: scale(1); opacity: 0.7; }
   50% { transform: scale(1.2); opacity: 1; }
+}
+
+.canvas-pan-mode {
+  cursor: grab;
+}
+
+.canvas-pan-mode:active {
+  cursor: grabbing;
 }
 
 .entity-card.group:hover .connection-controls {

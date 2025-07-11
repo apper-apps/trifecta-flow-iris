@@ -11,6 +11,7 @@ import Empty from "@/components/ui/Empty";
 import { entityService } from "@/services/api/entityService";
 import { aiTipService } from "@/services/api/aiTipService";
 import { detectStructureGaps } from "@/utils/entityUtils";
+import useCanvas from "@/hooks/useCanvas";
 const Dashboard = () => {
   const [entities, setEntities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,10 +20,24 @@ const Dashboard = () => {
   const [showEntityForm, setShowEntityForm] = useState(false);
   const [editingEntity, setEditingEntity] = useState(null);
   const [viewMode, setViewMode] = useState("2d");
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [showGrid, setShowGrid] = useState(false);
+  const [showSections, setShowSections] = useState(true);
+  
+  // Canvas controls using custom hook
+  const {
+    zoom,
+    pan,
+    isDragging,
+    handleZoomIn,
+    handleZoomOut,
+    handleResetView,
+    handlePanStart,
+    handlePanEnd,
+    handlePan,
+    setPan,
+  } = useCanvas(1, { x: 0, y: 0 });
   useEffect(() => {
     loadEntities();
   }, []);
@@ -177,24 +192,28 @@ const handleCreateEntity = async (entityData) => {
 
     setEntities(updatedEntities);
     toast.success("Entities auto-arranged!");
-  };
-
-  const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + 0.1, 2));
-  };
-
-  const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - 0.1, 0.5));
-  };
-
-  const handleResetView = () => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  };
+};
 
   const handleToggleView = () => {
     setViewMode(prev => prev === "2d" ? "3d" : "2d");
     toast.info(`Switched to ${viewMode === "2d" ? "3D" : "2D"} view`);
+  };
+
+  const handleToggleGrid = () => {
+    setShowGrid(prev => !prev);
+    toast.info(`Grid view ${showGrid ? "disabled" : "enabled"}`);
+  };
+
+  const handleToggleSections = () => {
+    setShowSections(prev => !prev);
+    toast.info(`Sections view ${showSections ? "disabled" : "enabled"}`);
+  };
+
+  // Get effective view mode for canvas
+  const getCanvasViewMode = () => {
+    if (showGrid) return "grid";
+    if (showSections) return "sections";
+    return viewMode;
   };
 
   if (loading) {
@@ -205,8 +224,8 @@ const handleCreateEntity = async (entityData) => {
     return <Error message={error} onRetry={loadEntities} />;
   }
 
-  return (
-<div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+return (
+    <div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       <CanvasToolbar
         onCreateEntity={() => setShowEntityForm(true)}
         onToggleView={handleToggleView}
@@ -217,6 +236,11 @@ const handleCreateEntity = async (entityData) => {
         onZoomOut={handleZoomOut}
         onResetView={handleResetView}
         onAutoArrange={handleAutoArrange}
+        showGrid={showGrid}
+        onToggleGrid={handleToggleGrid}
+        showSections={showSections}
+        onToggleSections={handleToggleSections}
+        isPanning={isDragging}
       />
       <div className="flex-1 relative">
         {entities.length === 0 ? (
@@ -232,7 +256,7 @@ const handleCreateEntity = async (entityData) => {
             onEntityUpdate={handleEntityUpdate}
             onEntitySelect={setSelectedEntity}
             selectedEntity={selectedEntity}
-            viewMode={viewMode}
+            viewMode={getCanvasViewMode()}
             zoom={zoom}
             pan={pan}
             onPanChange={setPan}
