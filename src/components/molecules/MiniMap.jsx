@@ -1,128 +1,163 @@
-import { motion } from "framer-motion";
-import { cn } from "@/utils/cn";
-import Card from "@/components/atoms/Card";
+import { useState, useRef, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { cn } from '@/utils/cn'
 
 const MiniMap = ({ 
   entities = [], 
-  canvasSize = { width: 1200, height: 800 },
-  viewportSize = { width: 800, height: 600 },
-  pan = { x: 0, y: 0 },
-  zoom = 1,
-  onNavigate,
-  className 
+  canvasSize = { width: 0, height: 0 }, 
+  viewportSize = { width: 0, height: 0 }, 
+  pan = { x: 0, y: 0 }, 
+  zoom = 1, 
+  onNavigate 
 }) => {
-  const mapSize = { width: 200, height: 150 };
-  const scaleX = mapSize.width / canvasSize.width;
-  const scaleY = mapSize.height / canvasSize.height;
+  const canvasRef = useRef(null)
+  const [isCanvasReady, setIsCanvasReady] = useState(false)
+  const [renderError, setRenderError] = useState(null)
 
-  const viewportRect = {
-    x: (-pan.x * scaleX) / zoom,
-    y: (-pan.y * scaleY) / zoom,
-    width: (viewportSize.width * scaleX) / zoom,
-    height: (viewportSize.height * scaleY) / zoom,
-  };
+  // Validate dimensions to prevent canvas errors
+  const hasValidDimensions = canvasSize.width > 0 && 
+                           canvasSize.height > 0 && 
+                           viewportSize.width > 0 && 
+                           viewportSize.height > 0
 
-  const handleMapClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / scaleX) - (viewportSize.width / 2);
-    const y = ((e.clientY - rect.top) / scaleY) - (viewportSize.height / 2);
+  // Calculate minimap dimensions with minimum size enforcement
+  const minimapSize = 200
+  const scale = Math.min(
+    minimapSize / Math.max(canvasSize.width, 1),
+    minimapSize / Math.max(canvasSize.height, 1)
+  )
+
+  const minimapWidth = Math.max(canvasSize.width * scale, 100)
+  const minimapHeight = Math.max(canvasSize.height * scale, 100)
+
+  useEffect(() => {
+    if (!hasValidDimensions || !canvasRef.current) {
+      setIsCanvasReady(false)
+      return
+    }
+
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
     
-    onNavigate?.({ x: -x, y: -y });
-  };
+    try {
+      // Set canvas dimensions
+      canvas.width = minimapWidth
+      canvas.height = minimapHeight
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, minimapWidth, minimapHeight)
+      
+      // Draw canvas background
+      ctx.fillStyle = '#f3f4f6'
+      ctx.fillRect(0, 0, minimapWidth, minimapHeight)
+      
+      // Draw viewport indicator
+      const viewportX = (-pan.x * scale) / zoom
+      const viewportY = (-pan.y * scale) / zoom
+      const viewportW = (viewportSize.width * scale) / zoom
+      const viewportH = (viewportSize.height * scale) / zoom
+      
+      // Ensure viewport dimensions are valid
+      if (viewportW > 0 && viewportH > 0) {
+        ctx.strokeStyle = '#3b82f6'
+        ctx.lineWidth = 2
+        ctx.strokeRect(
+          Math.max(0, viewportX),
+          Math.max(0, viewportY),
+          Math.min(viewportW, minimapWidth),
+          Math.min(viewportH, minimapHeight)
+        )
+      }
+      
+      // Draw entities
+      entities.forEach(entity => {
+        if (entity.position && typeof entity.position.x === 'number' && typeof entity.position.y === 'number') {
+          const x = entity.position.x * scale
+          const y = entity.position.y * scale
+          
+          // Only draw if within canvas bounds
+          if (x >= 0 && x <= minimapWidth && y >= 0 && y <= minimapHeight) {
+            ctx.fillStyle = getEntityColor(entity.type)
+            ctx.fillRect(x - 2, y - 2, 4, 4)
+          }
+        }
+      })
+      
+      setIsCanvasReady(true)
+      setRenderError(null)
+    } catch (error) {
+      console.error('MiniMap canvas rendering error:', error)
+      setRenderError(error.message)
+      setIsCanvasReady(false)
+    }
+  }, [entities, canvasSize, viewportSize, pan, zoom, minimapWidth, minimapHeight, hasValidDimensions])
+
+  const getEntityColor = (type) => {
+    const colors = {
+      'business-model': '#3b82f6',
+      'asset': '#10b981',
+      'foundation': '#6b7280',
+      'flow': '#f59e0b'
+    }
+    return colors[type] || '#6b7280'
+  }
+
+  const handleClick = (e) => {
+    if (!hasValidDimensions || !onNavigate) return
+
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    const canvasX = (x / scale) * zoom
+    const canvasY = (y / scale) * zoom
+    
+    onNavigate({
+      x: -canvasX + viewportSize.width / 2,
+      y: -canvasY + viewportSize.height / 2
+    })
+  }
+
+  // Don't render if dimensions are invalid
+  if (!hasValidDimensions) {
+    return (
+      <div className="minimap rounded-lg p-2 w-[200px] h-[150px] flex items-center justify-center">
+        <p className="text-xs text-gray-500">Map loading...</p>
+      </div>
+    )
+  }
+
+  // Show error state if rendering failed
+  if (renderError) {
+    return (
+      <div className="minimap rounded-lg p-2 w-[200px] h-[150px] flex items-center justify-center">
+        <p className="text-xs text-red-500">Map error</p>
+      </div>
+    )
+  }
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={cn("minimap", className)}
+      className={cn(
+        "minimap rounded-lg p-2 cursor-pointer",
+        !isCanvasReady && "opacity-50"
+      )}
+      onClick={handleClick}
     >
-      <Card className="p-3">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-medium text-gray-700">Mini Map</h3>
-          <div className="text-xs text-gray-500">
-            {Math.round(zoom * 100)}%
-          </div>
-        </div>
-        
-        <div 
-          className="relative bg-gray-50 border border-gray-200 rounded cursor-pointer overflow-hidden"
-          style={{ width: mapSize.width, height: mapSize.height }}
-          onClick={handleMapClick}
-        >
-          {/* Zone boundaries */}
-          <div className="absolute inset-0 pointer-events-none">
-            {/* Operations zone */}
-            <div 
-              className="absolute bg-operations-100 opacity-30"
-              style={{
-                left: "5%",
-                top: "5%",
-                width: "40%",
-                height: "40%",
-              }}
-            />
-            
-            {/* Assets zone */}
-            <div 
-              className="absolute bg-assets-100 opacity-30"
-              style={{
-                right: "5%",
-                top: "5%",
-                width: "40%",
-                height: "40%",
-              }}
-            />
-            
-            {/* Foundation zone */}
-            <div 
-              className="absolute bg-foundation-100 opacity-30"
-              style={{
-                left: "5%",
-                right: "5%",
-                bottom: "20%",
-                height: "35%",
-              }}
-            />
-            
-            {/* Flow zone */}
-            <div 
-              className="absolute bg-flow-100 opacity-30"
-              style={{
-                left: "5%",
-                right: "5%",
-                bottom: "5%",
-                height: "10%",
-              }}
-            />
-          </div>
-
-          {/* Entities */}
-          {entities.map((entity) => (
-            <div
-              key={entity.id}
-              className="absolute w-2 h-2 bg-blue-500 rounded-full opacity-70"
-              style={{
-                left: entity.position.x * scaleX,
-                top: entity.position.y * scaleY,
-                transform: "translate(-50%, -50%)",
-              }}
-            />
-          ))}
-
-          {/* Viewport indicator */}
-          <div
-            className="absolute border-2 border-blue-500 bg-blue-500 bg-opacity-10 pointer-events-none"
-            style={{
-              left: Math.max(0, Math.min(mapSize.width - viewportRect.width, viewportRect.x)),
-              top: Math.max(0, Math.min(mapSize.height - viewportRect.height, viewportRect.y)),
-              width: Math.min(mapSize.width, viewportRect.width),
-              height: Math.min(mapSize.height, viewportRect.height),
-            }}
-          />
-        </div>
-      </Card>
+      <canvas
+        ref={canvasRef}
+        className="rounded border border-gray-200"
+        style={{
+          width: minimapWidth,
+          height: minimapHeight,
+          maxWidth: '200px',
+          maxHeight: '150px'
+        }}
+      />
     </motion.div>
-  );
-};
+  )
+}
 
-export default MiniMap;
+export default MiniMap

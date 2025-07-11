@@ -344,15 +344,19 @@ const handleZoneDragOver = (e) => {
       </motion.div>
 
       {/* Mini Map */}
-      <div className="absolute bottom-4 right-4 z-20">
-        <MiniMap
-          entities={entities}
-          canvasSize={canvasSize}
-          viewportSize={viewportSize}
-          pan={pan}
-          zoom={zoom}
-          onNavigate={onPanChange}
-        />
+<div className="absolute bottom-4 right-4 z-20">
+        {/* Only render MiniMap when dimensions are valid to prevent canvas errors */}
+        {canvasSize.width > 0 && canvasSize.height > 0 && 
+         viewportSize.width > 0 && viewportSize.height > 0 && (
+          <MiniMap
+            entities={entities}
+            canvasSize={canvasSize}
+            viewportSize={viewportSize}
+            pan={pan}
+            zoom={zoom}
+            onNavigate={onPanChange}
+          />
+        )}
       </div>
 
       {/* AI Tip */}
