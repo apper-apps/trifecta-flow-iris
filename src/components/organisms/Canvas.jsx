@@ -6,6 +6,7 @@ import CanvasZones from "@/components/organisms/CanvasZones";
 import MiniMap from "@/components/molecules/MiniMap";
 import AITip from "@/components/molecules/AITip";
 import { aiTipService } from "@/services/api/aiTipService";
+import { getMagneticSnapPoints, findNearestSnapPoint, getConnectionType, getConnectionColor } from "@/utils/entityUtils";
 
 const Canvas = ({ 
   entities = [], 
@@ -16,6 +17,7 @@ const Canvas = ({
   zoom = 1,
   pan = { x: 0, y: 0 },
   onPanChange,
+  onGapDetection,
   className 
 }) => {
   const canvasRef = useRef(null);
@@ -25,11 +27,29 @@ const Canvas = ({
   const [aiTip, setAiTip] = useState(null);
   const [aiTipVisible, setAiTipVisible] = useState(false);
   const [aiTipPosition, setAiTipPosition] = useState({ x: 0, y: 0 });
-
-  const canvasSize = { width: 1200, height: 800 };
+  const [snapPoints, setSnapPoints] = useState([]);
+  const [activeSnapPoint, setActiveSnapPoint] = useState(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionStart, setConnectionStart] = useState(null);
+  const [hoveredConnection, setHoveredConnection] = useState(null);
+const canvasSize = { width: 1200, height: 800 };
   const viewportSize = { width: 800, height: 600 };
 
-  // Handle entity drag
+  useEffect(() => {
+    setSnapPoints(getMagneticSnapPoints(canvasSize));
+  }, [canvasSize]);
+
+  // Enhanced gap detection
+  useEffect(() => {
+    if (entities.length > 0 && onGapDetection) {
+      const timer = setTimeout(() => {
+        onGapDetection(entities);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [entities, onGapDetection]);
+
+// Handle entity drag with magnetic snapping
   const handleEntityDragStart = (e, entity) => {
     setIsDragging(true);
     setDraggedEntity(entity);
@@ -40,18 +60,36 @@ const Canvas = ({
     setIsDragging(false);
     setDraggedEntity(null);
     setHighlightedZone(null);
+    setActiveSnapPoint(null);
   };
 
-  // Handle zone drop
-  const handleZoneDrop = (e, zone) => {
+  const handleEntityDragOver = (e) => {
     e.preventDefault();
-    const entityId = e.dataTransfer.getData("text/plain");
-    const entity = entities.find(e => e.id === entityId);
-    
-    if (entity && entity.zone !== zone) {
+    if (isDragging && draggedEntity) {
       const rect = canvasRef.current.getBoundingClientRect();
       const x = (e.clientX - rect.left - pan.x) / zoom;
       const y = (e.clientY - rect.top - pan.y) / zoom;
+      
+      const nearestSnap = findNearestSnapPoint({ x, y }, snapPoints);
+      setActiveSnapPoint(nearestSnap);
+    }
+  };
+// Handle zone drop with magnetic snapping
+  const handleZoneDrop = (e, zone) => {
+    e.preventDefault();
+    const entityId = e.dataTransfer.getData("text/plain");
+    const entity = entities.find(e => e.Id === entityId);
+    
+    if (entity && entity.zone !== zone) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      let x = (e.clientX - rect.left - pan.x) / zoom;
+      let y = (e.clientY - rect.top - pan.y) / zoom;
+      
+      // Apply magnetic snapping
+      if (activeSnapPoint) {
+        x = activeSnapPoint.x;
+        y = activeSnapPoint.y;
+      }
       
       const updatedEntity = {
         ...entity,
@@ -66,10 +104,28 @@ const Canvas = ({
     }
   };
 
-  const handleZoneDragOver = (e) => {
-    e.preventDefault();
+  // Connection handling
+  const handleConnectionStart = (entity) => {
+    setIsConnecting(true);
+    setConnectionStart(entity);
   };
 
+  const handleConnectionEnd = (targetEntity) => {
+    if (connectionStart && targetEntity && connectionStart.Id !== targetEntity.Id) {
+      const updatedStartEntity = {
+        ...connectionStart,
+        connections: [...(connectionStart.connections || []), targetEntity.Id]
+      };
+      onEntityUpdate(updatedStartEntity);
+      showAITip("connection", { x: 400, y: 300 });
+    }
+    setIsConnecting(false);
+    setConnectionStart(null);
+  };
+const handleZoneDragOver = (e) => {
+    e.preventDefault();
+    handleEntityDragOver(e);
+  };
   // AI tip functionality
   const showAITip = async (trigger, position) => {
     try {
@@ -139,8 +195,17 @@ const Canvas = ({
           if (zone) {
             handleZoneDrop(e, zone);
           }
-        }}
+}}
         onDragOver={handleZoneDragOver}
+        onDrop={(e) => {
+          const zone = getZoneFromPosition(
+            (e.clientX - canvasRef.current.getBoundingClientRect().left - pan.x) / zoom,
+            (e.clientY - canvasRef.current.getBoundingClientRect().top - pan.y) / zoom
+          );
+          if (zone) {
+            handleZoneDrop(e, zone);
+          }
+        }}
       >
         {/* Zones */}
         <CanvasZones
@@ -164,40 +229,118 @@ const Canvas = ({
                 zIndex: selectedEntity?.id === entity.id ? 10 : 5,
               }}
             >
-              <EntityCard
+<EntityCard
                 entity={entity}
-                isDragging={draggedEntity?.id === entity.id}
+                isDragging={draggedEntity?.Id === entity.Id}
                 onDragStart={(e) => handleEntityDragStart(e, entity)}
                 onDragEnd={handleEntityDragEnd}
                 onClick={() => onEntitySelect(entity)}
+                onConnectionStart={() => handleConnectionStart(entity)}
+                onConnectionEnd={() => handleConnectionEnd(entity)}
+                isConnecting={isConnecting}
+                connectionStart={connectionStart}
                 className={cn(
-                  selectedEntity?.id === entity.id && "ring-2 ring-blue-500"
+                  selectedEntity?.Id === entity.Id && "ring-2 ring-blue-500"
                 )}
               />
             </motion.div>
           ))}
         </AnimatePresence>
 
-        {/* Connection lines (if needed) */}
+{/* Enhanced Connection Lines */}
         <svg className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
           {entities.map((entity) => 
             entity.connections?.map((connectionId) => {
-              const connectedEntity = entities.find(e => e.id === connectionId);
+              const connectedEntity = entities.find(e => e.Id === connectionId);
               if (!connectedEntity) return null;
 
+              const connectionType = getConnectionType(entity, connectedEntity);
+              const connectionColor = getConnectionColor(connectionType, entity, connectedEntity);
+              const isHovered = hoveredConnection === `${entity.Id}-${connectionId}`;
+
               return (
-                <line
-                  key={`${entity.id}-${connectionId}`}
-                  className="connection-line"
-                  x1={entity.position.x + 90}
-                  y1={entity.position.y + 50}
-                  x2={connectedEntity.position.x + 90}
-                  y2={connectedEntity.position.y + 50}
-                />
+                <g key={`${entity.Id}-${connectionId}`}>
+                  {/* Connection line */}
+                  <line
+                    className={cn(
+                      "transition-all duration-300",
+                      isHovered ? "opacity-100" : "opacity-70"
+                    )}
+                    x1={entity.position.x + 90}
+                    y1={entity.position.y + 50}
+                    x2={connectedEntity.position.x + 90}
+                    y2={connectedEntity.position.y + 50}
+                    stroke={connectionColor}
+                    strokeWidth={connectionType === "ownership" ? 4 : 2}
+                    strokeDasharray={connectionType === "income-flow" ? "8,4" : "none"}
+                    onMouseEnter={() => setHoveredConnection(`${entity.Id}-${connectionId}`)}
+                    onMouseLeave={() => setHoveredConnection(null)}
+                  />
+                  
+                  {/* Arrow marker */}
+                  <defs>
+                    <marker
+                      id={`arrow-${entity.Id}-${connectionId}`}
+                      markerWidth="10"
+                      markerHeight="10"
+                      refX="9"
+                      refY="3"
+                      orient="auto"
+                    >
+                      <polygon
+                        points="0 0, 10 3, 0 6"
+                        fill={connectionColor}
+                      />
+                    </marker>
+                  </defs>
+                  
+                  {/* Apply arrow to line */}
+                  <line
+                    x1={entity.position.x + 90}
+                    y1={entity.position.y + 50}
+                    x2={connectedEntity.position.x + 90}
+                    y2={connectedEntity.position.y + 50}
+                    stroke={connectionColor}
+                    strokeWidth={connectionType === "ownership" ? 4 : 2}
+                    strokeDasharray={connectionType === "income-flow" ? "8,4" : "none"}
+                    markerEnd={`url(#arrow-${entity.Id}-${connectionId})`}
+                    opacity={isHovered ? 1 : 0.7}
+                    className="transition-opacity duration-300"
+                  />
+
+                  {/* Pulsing effect on hover */}
+                  {isHovered && (
+                    <line
+                      x1={entity.position.x + 90}
+                      y1={entity.position.y + 50}
+                      x2={connectedEntity.position.x + 90}
+                      y2={connectedEntity.position.y + 50}
+                      stroke={connectionColor}
+                      strokeWidth={connectionType === "ownership" ? 8 : 4}
+                      opacity="0.3"
+                      className="animate-pulse"
+                    />
+                  )}
+                </g>
               );
             }) || []
           )}
         </svg>
+
+        {/* Magnetic Snap Points */}
+        {isDragging && activeSnapPoint && (
+          <motion.div
+            className="absolute w-6 h-6 border-2 border-blue-500 rounded-full bg-blue-100"
+            style={{
+              left: activeSnapPoint.x - 12,
+              top: activeSnapPoint.y - 12,
+              zIndex: 20
+            }}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          />
+        )}
       </motion.div>
 
       {/* Mini Map */}

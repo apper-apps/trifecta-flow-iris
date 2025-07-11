@@ -4,11 +4,13 @@ import { motion } from "framer-motion";
 import CanvasToolbar from "@/components/organisms/CanvasToolbar";
 import Canvas from "@/components/organisms/Canvas";
 import EntityForm from "@/components/molecules/EntityForm";
+import EntityTemplateLibrary from "@/components/organisms/EntityTemplateLibrary";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
 import { entityService } from "@/services/api/entityService";
-
+import { aiTipService } from "@/services/api/aiTipService";
+import { detectStructureGaps } from "@/utils/entityUtils";
 const Dashboard = () => {
   const [entities, setEntities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +21,8 @@ const Dashboard = () => {
   const [viewMode, setViewMode] = useState("2d");
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-
+  const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   useEffect(() => {
     loadEntities();
   }, []);
@@ -38,20 +41,54 @@ const Dashboard = () => {
     }
   };
 
-  const handleCreateEntity = async (entityData) => {
+const handleCreateEntity = async (entityData) => {
     try {
       const newEntity = await entityService.create({
         ...entityData,
-        position: { x: 100, y: 100 },
+        position: selectedTemplate?.position || { x: 100, y: 100 },
         zone: getDefaultZone(entityData.type),
         connections: [],
       });
       setEntities(prev => [...prev, newEntity]);
       setShowEntityForm(false);
+      setSelectedTemplate(null);
       toast.success("Entity created successfully!");
     } catch (err) {
       toast.error("Failed to create entity");
       console.error("Error creating entity:", err);
+    }
+  };
+
+  const handleTemplateSelect = (template) => {
+    setSelectedTemplate(template);
+    setShowEntityForm(true);
+  };
+
+  const handleGapDetection = async (currentEntities) => {
+    try {
+      const gaps = detectStructureGaps(currentEntities);
+      
+      if (gaps.length > 0) {
+        // Show AI tip for the first gap found
+        const firstGap = gaps[0];
+        const aiTip = {
+          trigger: firstGap.type,
+          message: firstGap.message,
+          priority: firstGap.priority
+        };
+        
+        // Store AI tip for display
+        await aiTipService.create(aiTip);
+        
+        // Show toast notification
+        if (firstGap.priority === "high") {
+          toast.warning(firstGap.message);
+        } else {
+          toast.info(firstGap.message);
+        }
+      }
+    } catch (err) {
+      console.error("Error detecting gaps:", err);
     }
   };
 
@@ -169,10 +206,11 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+<div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       <CanvasToolbar
         onCreateEntity={() => setShowEntityForm(true)}
         onToggleView={handleToggleView}
+        onShowTemplates={() => setShowTemplateLibrary(true)}
         viewMode={viewMode}
         zoom={zoom}
         onZoomIn={handleZoomIn}
@@ -180,7 +218,6 @@ const Dashboard = () => {
         onResetView={handleResetView}
         onAutoArrange={handleAutoArrange}
       />
-
       <div className="flex-1 relative">
         {entities.length === 0 ? (
           <Empty
@@ -190,7 +227,7 @@ const Dashboard = () => {
             onAction={() => setShowEntityForm(true)}
           />
         ) : (
-          <Canvas
+<Canvas
             entities={entities}
             onEntityUpdate={handleEntityUpdate}
             onEntitySelect={setSelectedEntity}
@@ -199,20 +236,29 @@ const Dashboard = () => {
             zoom={zoom}
             pan={pan}
             onPanChange={setPan}
+            onGapDetection={handleGapDetection}
           />
         )}
       </div>
 
-      {showEntityForm && (
+{showEntityForm && (
         <EntityForm
           initialData={editingEntity}
+          selectedTemplate={selectedTemplate}
           onSubmit={editingEntity ? handleUpdateEntity : handleCreateEntity}
           onCancel={() => {
             setShowEntityForm(false);
             setEditingEntity(null);
+            setSelectedTemplate(null);
           }}
         />
       )}
+
+      <EntityTemplateLibrary
+        isOpen={showTemplateLibrary}
+        onClose={() => setShowTemplateLibrary(false)}
+        onTemplateSelect={handleTemplateSelect}
+      />
     </div>
   );
 };

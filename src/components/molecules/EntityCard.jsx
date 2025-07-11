@@ -9,6 +9,10 @@ const EntityCard = ({
   onDragStart,
   onDragEnd,
   onClick,
+  onConnectionStart,
+  onConnectionEnd,
+  isConnecting = false,
+  connectionStart = null,
   className,
   ...props 
 }) => {
@@ -80,7 +84,7 @@ const EntityCard = ({
       onClick={onClick}
       {...props}
     >
-      <Card variant={entityColor} className="p-4 min-w-[180px]">
+<Card variant={entityColor} className="p-4 min-w-[180px] relative">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className={cn(
@@ -102,9 +106,46 @@ const EntityCard = ({
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {/* Connection indicator */}
+            {entity.connections && entity.connections.length > 0 && (
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                <span className="text-xs text-gray-500">{entity.connections.length}</span>
+              </div>
+            )}
             <ApperIcon name="GripVertical" className="w-4 h-4 text-gray-400" />
           </div>
         </div>
+
+        {/* Connection controls */}
+        {!isDragging && (
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex gap-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onConnectionStart && onConnectionStart();
+                }}
+                className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                title="Start connection"
+              >
+                <ApperIcon name="Plus" className="w-3 h-3" />
+              </button>
+              {isConnecting && connectionStart && connectionStart.Id !== entity.Id && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onConnectionEnd && onConnectionEnd();
+                  }}
+                  className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors"
+                  title="End connection"
+                >
+                  <ApperIcon name="Check" className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {(entity.financials?.revenue || entity.financials?.value) && (
           <div className="border-t pt-3">

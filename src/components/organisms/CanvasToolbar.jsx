@@ -5,6 +5,7 @@ import ApperIcon from "@/components/ApperIcon";
 const CanvasToolbar = ({ 
   onCreateEntity, 
   onToggleView, 
+  onShowTemplates,
   viewMode = "2d",
   zoom = 1,
   onZoomIn,
@@ -30,9 +31,18 @@ const CanvasToolbar = ({
           
           <div className="h-6 w-px bg-gray-300" />
           
-          <div className="flex items-center gap-2">
+<div className="flex items-center gap-2">
             <Button
               variant="primary"
+              onClick={onShowTemplates}
+              className="flex items-center gap-2"
+            >
+              <ApperIcon name="Package" className="w-4 h-4" />
+              Templates
+            </Button>
+            
+            <Button
+              variant="outline"
               onClick={onCreateEntity}
               className="flex items-center gap-2"
             >

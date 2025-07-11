@@ -5,14 +5,13 @@ import FormField from "@/components/molecules/FormField";
 import Card from "@/components/atoms/Card";
 import ApperIcon from "@/components/ApperIcon";
 
-const EntityForm = ({ onSubmit, onCancel, initialData = null }) => {
-  const [formData, setFormData] = useState({
-    name: initialData?.name || "",
-    type: initialData?.type || "s-corp",
-    revenue: initialData?.financials?.revenue || "",
-    value: initialData?.financials?.value || "",
+const EntityForm = ({ onSubmit, onCancel, initialData = null, selectedTemplate = null }) => {
+const [formData, setFormData] = useState({
+    name: initialData?.name || selectedTemplate?.name || "",
+    type: initialData?.type || selectedTemplate?.type || "s-corp",
+    revenue: initialData?.financials?.revenue || selectedTemplate?.template?.financials?.revenue || "",
+    value: initialData?.financials?.value || selectedTemplate?.template?.financials?.value || "",
   });
-
   const [errors, setErrors] = useState({});
 
   const validateForm = () => {
@@ -69,10 +68,10 @@ const EntityForm = ({ onSubmit, onCancel, initialData = null }) => {
       exit={{ opacity: 0, scale: 0.95 }}
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
     >
-      <Card className="w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+<Card className="w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">
-            {initialData ? "Edit Entity" : "Create New Entity"}
+            {initialData ? "Edit Entity" : selectedTemplate ? `Create ${selectedTemplate.name}` : "Create New Entity"}
           </h2>
           <Button
             variant="ghost"
@@ -83,6 +82,22 @@ const EntityForm = ({ onSubmit, onCancel, initialData = null }) => {
             <ApperIcon name="X" className="w-4 h-4" />
           </Button>
         </div>
+
+        {/* Template preview */}
+        {selectedTemplate && (
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-2 mb-2">
+              <ApperIcon name={selectedTemplate.icon} className="w-5 h-5 text-blue-600" />
+              <h3 className="font-semibold text-blue-900">{selectedTemplate.name}</h3>
+            </div>
+            <p className="text-sm text-blue-700 mb-2">{selectedTemplate.description}</p>
+            {selectedTemplate.template.details && (
+              <p className="text-xs text-blue-600 bg-blue-100 rounded px-2 py-1">
+                {selectedTemplate.template.details}
+              </p>
+            )}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <FormField

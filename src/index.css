@@ -116,6 +116,7 @@ h1, h2, h3, h4, h5, h6 {
   stroke-dasharray: 5,5;
   fill: none;
   opacity: 0.7;
+  transition: all 0.3s ease;
 }
 
 .connection-line.active {
@@ -123,6 +124,24 @@ h1, h2, h3, h4, h5, h6 {
   stroke-width: 3;
   stroke-dasharray: none;
   opacity: 1;
+}
+
+.connection-line.ownership {
+  stroke: #3b82f6;
+  stroke-width: 4;
+  stroke-dasharray: none;
+}
+
+.connection-line.income-flow {
+  stroke: #10b981;
+  stroke-width: 2;
+  stroke-dasharray: 8,4;
+}
+
+.connection-line.risk {
+  stroke: #ef4444;
+  stroke-width: 2;
+  stroke-dasharray: 4,4;
 }
 
 .toolbar-gradient {
@@ -148,3 +167,29 @@ h1, h2, h3, h4, h5, h6 {
 .flow-particles:nth-child(2) { animation-delay: 1s; }
 .flow-particles:nth-child(3) { animation-delay: 2s; }
 .flow-particles:nth-child(4) { animation-delay: 3s; }
+
+.template-library {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 1) 100%);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.magnetic-snap {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0.1) 50%, transparent 100%);
+  border: 2px solid rgba(59, 130, 246, 0.5);
+  animation: magnetic-pulse 1s ease-in-out infinite;
+}
+
+@keyframes magnetic-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+.entity-card.group:hover .connection-controls {
+  opacity: 1;
+}
+
+.connection-controls {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
