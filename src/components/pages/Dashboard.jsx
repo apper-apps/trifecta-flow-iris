@@ -241,8 +241,8 @@ return (
         showSections={showSections}
         onToggleSections={handleToggleSections}
         isPanning={isDragging}
-      />
-      <div className="flex-1 relative">
+/>
+      <div className="flex-1 relative overflow-hidden">
         {entities.length === 0 ? (
           <Empty
             title="No entities yet"
@@ -261,6 +261,7 @@ return (
             pan={pan}
             onPanChange={setPan}
             onGapDetection={handleGapDetection}
+            className="w-full h-full"
           />
         )}
       </div>

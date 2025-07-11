@@ -220,7 +220,7 @@ return (
         {/* Canvas Background */}
         <div
           className={cn(
-            "canvas-background absolute inset-0",
+            "canvas-background absolute inset-0 z-0",
             viewMode === "grid" && "canvas-grid",
             viewMode === "sections" && "canvas-sections"
           )}
@@ -235,14 +235,14 @@ return (
         {/* Canvas Content */}
         <motion.div
           ref={canvasRef}
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 z-10"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: "0 0",
           }}
         >
-          <div
-            className="relative pointer-events-auto"
+<div
+            className="relative w-full h-full"
             style={{
               width: `${canvasSize.width}px`,
               height: `${canvasSize.height}px`,
@@ -397,8 +397,8 @@ return (
         </motion.div>
       </div>
 
-      {/* Mini Map */}
-<div className="absolute bottom-4 right-4 z-20">
+{/* Mini Map */}
+<div className="absolute bottom-4 right-4 z-30">
         {/* Only render MiniMap when dimensions are valid to prevent canvas errors */}
         {canvasSize.width > 0 && canvasSize.height > 0 && 
          viewportSize.width > 0 && viewportSize.height > 0 && 
@@ -413,7 +413,6 @@ return (
           />
         )}
       </div>
-
       {/* AI Tip */}
       <AITip
         tip={aiTip}
