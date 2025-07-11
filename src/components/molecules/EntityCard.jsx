@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { cn } from "@/utils/cn";
 import ApperIcon from "@/components/ApperIcon";
 import Card from "@/components/atoms/Card";
@@ -13,9 +14,14 @@ const EntityCard = ({
   onConnectionEnd,
   isConnecting = false,
   connectionStart = null,
+  onEdit,
+  onDelete,
+  isSelected = false,
   className,
   ...props 
 }) => {
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   const getEntityIcon = (type) => {
     switch (type) {
       case "s-corp":
@@ -67,23 +73,60 @@ const EntityCard = ({
   const entityColor = getEntityColor(entity.type);
   const iconName = getEntityIcon(entity.type);
 
-return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: isDragging ? 1.05 : 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className={cn(
-        "entity-card cursor-grab active:cursor-grabbing group",
-        isDragging && "dragging",
-        className
-      )}
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onClick={onClick}
-      {...props}
-    >
+const handleContextMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenuPos({ x: e.clientX, y: e.clientY });
+    setShowContextMenu(true);
+  };
+
+  const handleDoubleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit(entity);
+    }
+  };
+
+  const handleEdit = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowContextMenu(false);
+    if (onEdit) {
+      onEdit(entity);
+    }
+  };
+
+  const handleDeleteClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowContextMenu(false);
+    if (onDelete) {
+      onDelete(entity.Id);
+    }
+  };
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: isDragging ? 1.05 : 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className={cn(
+          "entity-card cursor-grab active:cursor-grabbing group relative",
+          isDragging && "dragging",
+          isSelected && "ring-2 ring-blue-500 ring-offset-2",
+          className
+        )}
+        draggable
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onClick={onClick}
+        onDoubleClick={handleDoubleClick}
+        onContextMenu={handleContextMenu}
+        {...props}
+      >
 <Card variant={entityColor} className="p-4 min-w-[180px] relative">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -169,8 +212,43 @@ return (
             )}
           </div>
         )}
-      </Card>
-    </motion.div>
+</Card>
+      </motion.div>
+
+      {/* Context Menu */}
+      {showContextMenu && (
+        <>
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setShowContextMenu(false)}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="fixed z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px]"
+            style={{
+              left: contextMenuPos.x,
+              top: contextMenuPos.y,
+            }}
+          >
+            <button
+              onClick={handleEdit}
+              className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+            >
+              <ApperIcon name="Edit" className="w-4 h-4" />
+              Edit
+            </button>
+            <button
+              onClick={handleDeleteClick}
+              className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+            >
+              <ApperIcon name="Trash2" className="w-4 h-4" />
+              Delete
+            </button>
+          </motion.div>
+        </>
+      )}
+    </>
   );
 };
 

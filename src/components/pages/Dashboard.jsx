@@ -1,17 +1,19 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
-import CanvasToolbar from "@/components/organisms/CanvasToolbar";
+import { detectStructureGaps, getDefaultZone } from "@/utils/entityUtils";
+import ApperIcon from "@/components/ApperIcon";
 import Canvas from "@/components/organisms/Canvas";
-import EntityForm from "@/components/molecules/EntityForm";
 import EntityTemplateLibrary from "@/components/organisms/EntityTemplateLibrary";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
+import CanvasToolbar from "@/components/organisms/CanvasToolbar";
+import Button from "@/components/atoms/Button";
 import Empty from "@/components/ui/Empty";
-import { entityService } from "@/services/api/entityService";
-import { aiTipService } from "@/services/api/aiTipService";
-import { detectStructureGaps } from "@/utils/entityUtils";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import EntityForm from "@/components/molecules/EntityForm";
 import useCanvas from "@/hooks/useCanvas";
+import { aiTipService } from "@/services/api/aiTipService";
+import { entityService } from "@/services/api/entityService";
 const Dashboard = () => {
   const [entities, setEntities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +26,8 @@ const Dashboard = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [showGrid, setShowGrid] = useState(false);
   const [showSections, setShowSections] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [entityToDelete, setEntityToDelete] = useState(null);
   
   // Canvas controls using custom hook
   const {
@@ -129,17 +133,36 @@ const handleCreateEntity = async (entityData) => {
       console.error("Error updating entity:", err);
     }
   };
+const handleEditEntity = (entity) => {
+    setEditingEntity(entity);
+    setShowEntityForm(true);
+  };
 
   const handleDeleteEntity = async (entityId) => {
     try {
       await entityService.delete(entityId);
       setEntities(prev => prev.filter(e => e.Id !== entityId));
       setSelectedEntity(null);
+      setEntityToDelete(null);
+      setShowDeleteConfirm(false);
       toast.success("Entity deleted successfully!");
     } catch (err) {
       toast.error("Failed to delete entity");
       console.error("Error deleting entity:", err);
     }
+  };
+
+  const handleDeleteConfirm = (entityId) => {
+    const entity = entities.find(e => e.Id === entityId);
+    if (entity) {
+      setEntityToDelete(entity);
+      setShowDeleteConfirm(true);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setEntityToDelete(null);
+    setShowDeleteConfirm(false);
   };
 
   const getDefaultZone = (type) => {
@@ -241,7 +264,10 @@ return (
         showSections={showSections}
         onToggleSections={handleToggleSections}
         isPanning={isDragging}
-/>
+        selectedEntity={selectedEntity}
+        onEditEntity={handleEditEntity}
+        onDeleteEntity={handleDeleteConfirm}
+      />
       <div className="flex-1 relative overflow-hidden">
         {entities.length === 0 ? (
           <Empty
@@ -252,18 +278,20 @@ return (
           />
         ) : (
 <Canvas
-            entities={entities}
-            onEntityUpdate={handleEntityUpdate}
-            onEntitySelect={setSelectedEntity}
-            selectedEntity={selectedEntity}
-            viewMode={getCanvasViewMode()}
-            zoom={zoom}
-            pan={pan}
-            onPanChange={setPan}
-            onGapDetection={handleGapDetection}
-            className="w-full h-full"
-          />
-        )}
+              entities={entities}
+              onEntityUpdate={handleEntityUpdate}
+              onEntitySelect={setSelectedEntity}
+              selectedEntity={selectedEntity}
+              onEntityEdit={handleEditEntity}
+              onEntityDelete={handleDeleteConfirm}
+              viewMode={getCanvasViewMode()}
+              zoom={zoom}
+              pan={pan}
+              onPanChange={setPan}
+              onGapDetection={handleGapDetection}
+              className="w-full h-full"
+            />
+          )}
       </div>
 
 {showEntityForm && (
@@ -283,7 +311,48 @@ return (
         isOpen={showTemplateLibrary}
         onClose={() => setShowTemplateLibrary(false)}
         onTemplateSelect={handleTemplateSelect}
-      />
+/>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && entityToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-lg p-6 max-w-md w-full"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <ApperIcon name="AlertTriangle" className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Delete Entity</h3>
+                <p className="text-sm text-gray-600">This action cannot be undone.</p>
+              </div>
+            </div>
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to delete <strong>{entityToDelete.name}</strong>? 
+              This will remove all connections and data associated with this entity.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="danger"
+                onClick={() => handleDeleteEntity(entityToDelete.Id)}
+                className="flex-1"
+              >
+                Delete Entity
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleCancelDelete}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

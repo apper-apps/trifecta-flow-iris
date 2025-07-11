@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import Button from "@/components/atoms/Button";
 import ApperIcon from "@/components/ApperIcon";
+
 const CanvasToolbar = ({ 
   onCreateEntity, 
   onToggleView, 
@@ -16,6 +17,9 @@ const CanvasToolbar = ({
   showSections = true,
   onToggleSections,
   isPanning = false,
+  selectedEntity = null,
+  onEditEntity,
+  onDeleteEntity,
   className 
 }) => {
   return (
@@ -63,6 +67,37 @@ const CanvasToolbar = ({
               Auto Arrange
             </Button>
           </div>
+          
+          {/* Entity Management Controls */}
+          {selectedEntity && (
+            <>
+              <div className="h-6 w-px bg-gray-300" />
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg border border-blue-200">
+                  <ApperIcon name="Target" className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-700">
+                    {selectedEntity.name}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => onEditEntity && onEditEntity(selectedEntity)}
+                  className="flex items-center gap-2"
+                >
+                  <ApperIcon name="Edit" className="w-4 h-4" />
+                  Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => onDeleteEntity && onDeleteEntity(selectedEntity.Id)}
+                  className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <ApperIcon name="Trash2" className="w-4 h-4" />
+                  Delete
+                </Button>
+              </div>
+            </>
+          )}
           
           <div className="h-6 w-px bg-gray-300" />
           

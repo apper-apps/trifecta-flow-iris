@@ -13,6 +13,8 @@ const Canvas = ({
   onEntityUpdate,
   onEntitySelect,
   selectedEntity = null,
+  onEntityEdit,
+  onEntityDelete,
   viewMode = "2d",
   zoom = 1,
   pan = { x: 0, y: 0 },
@@ -282,19 +284,22 @@ return (
               }}
             >
 <EntityCard
-                entity={entity}
-                isDragging={draggedEntity?.Id === entity.Id}
-                onDragStart={(e) => handleEntityDragStart(e, entity)}
-                onDragEnd={handleEntityDragEnd}
-                onClick={() => onEntitySelect(entity)}
-                onConnectionStart={() => handleConnectionStart(entity)}
-                onConnectionEnd={() => handleConnectionEnd(entity)}
-                isConnecting={isConnecting}
-                connectionStart={connectionStart}
-                className={cn(
-                  selectedEntity?.Id === entity.Id && "ring-2 ring-blue-500"
-                )}
-              />
+                  entity={entity}
+                  isDragging={draggedEntity?.Id === entity.Id}
+                  onDragStart={(e) => handleEntityDragStart(e, entity)}
+                  onDragEnd={handleEntityDragEnd}
+                  onClick={() => onEntitySelect(entity)}
+                  onConnectionStart={() => handleConnectionStart(entity)}
+                  onConnectionEnd={() => handleConnectionEnd(entity)}
+                  isConnecting={isConnecting}
+                  connectionStart={connectionStart}
+                  onEdit={onEntityEdit}
+                  onDelete={onEntityDelete}
+                  isSelected={selectedEntity?.Id === entity.Id}
+                  className={cn(
+                    selectedEntity?.Id === entity.Id && "ring-2 ring-blue-500"
+                  )}
+                />
             </motion.div>
           ))}
         </AnimatePresence>
