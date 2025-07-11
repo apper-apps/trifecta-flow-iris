@@ -1,0 +1,72 @@
+[
+  {
+    "Id": 1,
+    "name": "TechCorp Solutions",
+    "type": "s-corp",
+    "zone": "operations",
+    "position": { "x": 150, "y": 150 },
+    "financials": {
+      "revenue": 500000,
+      "value": null
+    },
+    "connections": [],
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T10:30:00Z"
+  },
+  {
+    "Id": 2,
+    "name": "Rental Properties LLC",
+    "type": "llc",
+    "zone": "assets",
+    "position": { "x": 700, "y": 150 },
+    "financials": {
+      "revenue": 120000,
+      "value": 800000
+    },
+    "connections": [3],
+    "createdAt": "2024-01-15T11:15:00Z",
+    "updatedAt": "2024-01-15T11:15:00Z"
+  },
+  {
+    "Id": 3,
+    "name": "Family Living Trust",
+    "type": "trust",
+    "zone": "foundation",
+    "position": { "x": 400, "y": 450 },
+    "financials": {
+      "revenue": null,
+      "value": 1200000
+    },
+    "connections": [1, 2],
+    "createdAt": "2024-01-15T12:00:00Z",
+    "updatedAt": "2024-01-15T12:00:00Z"
+  },
+  {
+    "Id": 4,
+    "name": "E-commerce Store",
+    "type": "business",
+    "zone": "operations",
+    "position": { "x": 350, "y": 150 },
+    "financials": {
+      "revenue": 250000,
+      "value": null
+    },
+    "connections": [],
+    "createdAt": "2024-01-16T09:30:00Z",
+    "updatedAt": "2024-01-16T09:30:00Z"
+  },
+  {
+    "Id": 5,
+    "name": "Investment Portfolio",
+    "type": "investment",
+    "zone": "assets",
+    "position": { "x": 900, "y": 150 },
+    "financials": {
+      "revenue": 45000,
+      "value": 600000
+    },
+    "connections": [3],
+    "createdAt": "2024-01-16T14:20:00Z",
+    "updatedAt": "2024-01-16T14:20:00Z"
+  }
+]

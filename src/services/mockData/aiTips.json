@@ -1,0 +1,44 @@
+[
+  {
+    "Id": 1,
+    "trigger": "operations",
+    "message": "Great choice! S-Corps in the Operations zone help you optimize employment taxes while maintaining business flexibility. Consider maximizing your reasonable salary strategy here.",
+    "priority": "high",
+    "createdAt": "2024-01-15T10:00:00Z"
+  },
+  {
+    "Id": 2,
+    "trigger": "assets",
+    "message": "Smart move! LLCs in the Assets zone provide excellent liability protection for your investments. This structure helps separate your active business from passive income streams.",
+    "priority": "medium",
+    "createdAt": "2024-01-15T10:00:00Z"
+  },
+  {
+    "Id": 3,
+    "trigger": "foundation",
+    "message": "Excellent foundation! The trust structure at the base provides estate planning benefits and potential tax advantages. Consider how this owns and controls your other entities.",
+    "priority": "high",
+    "createdAt": "2024-01-15T10:00:00Z"
+  },
+  {
+    "Id": 4,
+    "trigger": "entity-creation",
+    "message": "Welcome to entity creation! Consider the tax implications of each entity type. S-Corps are great for active businesses, LLCs for passive investments, and trusts for estate planning.",
+    "priority": "medium",
+    "createdAt": "2024-01-15T10:00:00Z"
+  },
+  {
+    "Id": 5,
+    "trigger": "connection",
+    "message": "Connecting entities creates ownership flows that can optimize your tax structure. Make sure you understand how income and losses flow through each connection.",
+    "priority": "low",
+    "createdAt": "2024-01-15T10:00:00Z"
+  },
+  {
+    "Id": 6,
+    "trigger": "flow",
+    "message": "The 1040 Flow zone shows how all your entity income and deductions ultimately flow to your personal tax return. This is where the magic of tax optimization happens!",
+    "priority": "high",
+    "createdAt": "2024-01-15T10:00:00Z"
+  }
+]
