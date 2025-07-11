@@ -67,14 +67,14 @@ const EntityCard = ({
   const entityColor = getEntityColor(entity.type);
   const iconName = getEntityIcon(entity.type);
 
-  return (
+return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ scale: isDragging ? 1.05 : 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
-        "entity-card cursor-grab active:cursor-grabbing",
+        "entity-card cursor-grab active:cursor-grabbing group",
         isDragging && "dragging",
         className
       )}
@@ -117,16 +117,17 @@ const EntityCard = ({
           </div>
         </div>
 
-        {/* Connection controls */}
+{/* Connection controls */}
         {!isDragging && (
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
             <div className="flex gap-1">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   onConnectionStart && onConnectionStart();
                 }}
-                className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors shadow-lg"
                 title="Start connection"
               >
                 <ApperIcon name="Plus" className="w-3 h-3" />
@@ -135,9 +136,10 @@ const EntityCard = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     onConnectionEnd && onConnectionEnd();
                   }}
-                  className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors"
+                  className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors shadow-lg"
                   title="End connection"
                 >
                   <ApperIcon name="Check" className="w-3 h-3" />

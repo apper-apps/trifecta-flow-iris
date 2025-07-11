@@ -76,12 +76,25 @@ export const getEntitiesByZone = (entities, zone) => {
 };
 
 export const validateEntityPosition = (position, canvasSize) => {
+  const entityWidth = 200;
+  const entityHeight = 120;
   return {
-    x: Math.max(0, Math.min(position.x, canvasSize.width - 200)),
-    y: Math.max(0, Math.min(position.y, canvasSize.height - 150)),
+    x: Math.max(0, Math.min(position.x, canvasSize.width - entityWidth)),
+    y: Math.max(0, Math.min(position.y, canvasSize.height - entityHeight)),
   };
 };
 
+export const getDefaultPosition = (zone, canvasSize) => {
+  const padding = 50;
+  const positions = {
+    operations: { x: padding, y: padding },
+    assets: { x: canvasSize.width * 0.6, y: padding },
+    foundation: { x: canvasSize.width * 0.1, y: canvasSize.height * 0.55 },
+    flow: { x: canvasSize.width * 0.1, y: canvasSize.height * 0.87 }
+  };
+  
+  return positions[zone] || positions.operations;
+};
 export const getEntityTemplates = () => {
   return [
     {

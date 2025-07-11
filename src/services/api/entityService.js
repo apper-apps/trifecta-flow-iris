@@ -19,9 +19,18 @@ export const entityService = {
 
 async create(entityData) {
     await new Promise(resolve => setTimeout(resolve, 300));
+    const { getDefaultPosition, getDefaultZone } = await import("@/utils/entityUtils");
+    const canvasSize = { width: 1200, height: 800 };
+    
+    const zone = entityData.zone || getDefaultZone(entityData.type);
+    const position = entityData.position || getDefaultPosition(zone, canvasSize);
+    
     const newEntity = {
       ...entityData,
       Id: entities.length > 0 ? Math.max(...entities.map(e => e.Id)) + 1 : 1,
+      zone,
+      position,
+      connections: entityData.connections || [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

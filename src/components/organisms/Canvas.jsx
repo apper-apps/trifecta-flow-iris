@@ -148,11 +148,15 @@ const handleZoneDragOver = (e) => {
   const [isPanning, setIsPanning] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
 
-  const handleCanvasMouseDown = (e) => {
+const handleCanvasMouseDown = (e) => {
+    // Only allow panning if clicking on canvas background, not on entities
     if (e.target === canvasRef.current || e.target.closest('.canvas-background')) {
-      setIsPanning(true);
-      setLastMousePos({ x: e.clientX, y: e.clientY });
-      e.preventDefault();
+      const isClickingEntity = e.target.closest('.entity-card');
+      if (!isClickingEntity) {
+        setIsPanning(true);
+        setLastMousePos({ x: e.clientX, y: e.clientY });
+        e.preventDefault();
+      }
     }
   };
 
@@ -183,7 +187,7 @@ const handleZoneDragOver = (e) => {
     }
   }, [isPanning, lastMousePos]);
 
-  const getZoneFromPosition = (x, y) => {
+const getZoneFromPosition = (x, y) => {
     const zones = [
       { id: "operations", bounds: { x: 0.05, y: 0.05, width: 0.4, height: 0.4 } },
       { id: "assets", bounds: { x: 0.55, y: 0.05, width: 0.4, height: 0.4 } },
@@ -191,16 +195,14 @@ const handleZoneDragOver = (e) => {
       { id: "flow", bounds: { x: 0.05, y: 0.85, width: 0.9, height: 0.1 } },
     ];
 
-    const relativeX = x / canvasSize.width;
-    const relativeY = y / canvasSize.height;
-
+    // Use absolute positioning instead of relative
     for (const zone of zones) {
-      if (
-        relativeX >= zone.bounds.x &&
-        relativeX <= zone.bounds.x + zone.bounds.width &&
-        relativeY >= zone.bounds.y &&
-        relativeY <= zone.bounds.y + zone.bounds.height
-      ) {
+      const zoneLeft = canvasSize.width * zone.bounds.x;
+      const zoneTop = canvasSize.height * zone.bounds.y;
+      const zoneRight = zoneLeft + (canvasSize.width * zone.bounds.width);
+      const zoneBottom = zoneTop + (canvasSize.height * zone.bounds.height);
+      
+      if (x >= zoneLeft && x <= zoneRight && y >= zoneTop && y <= zoneBottom) {
         return zone.id;
       }
     }
@@ -399,7 +401,8 @@ return (
 <div className="absolute bottom-4 right-4 z-20">
         {/* Only render MiniMap when dimensions are valid to prevent canvas errors */}
         {canvasSize.width > 0 && canvasSize.height > 0 && 
-         viewportSize.width > 0 && viewportSize.height > 0 && (
+         viewportSize.width > 0 && viewportSize.height > 0 && 
+         entities.length > 0 && (
           <MiniMap
             entities={entities}
             canvasSize={canvasSize}

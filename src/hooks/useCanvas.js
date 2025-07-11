@@ -41,13 +41,20 @@ const handleZoomIn = useCallback(() => {
     setIsDragging(false);
   }, []);
 
-  const handlePan = useCallback((deltaX, deltaY) => {
+const handlePan = useCallback((deltaX, deltaY) => {
     setPan(prev => ({
       x: prev.x + deltaX,
       y: prev.y + deltaY,
     }));
   }, []);
 
+  const handlePanChange = useCallback((newPan) => {
+    if (typeof newPan === 'function') {
+      setPan(newPan);
+    } else {
+      setPan(newPan);
+    }
+  }, []);
 return {
     zoom,
     pan,
@@ -64,6 +71,7 @@ return {
     handlePanStart,
     handlePanEnd,
     handlePan,
+    handlePanChange,
     setPan,
     setViewMode,
     setShowGrid,
