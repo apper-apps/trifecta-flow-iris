@@ -53,9 +53,8 @@ const canvasSize = { width: 1200, height: 800 };
   const handleEntityDragStart = (e, entity) => {
     setIsDragging(true);
     setDraggedEntity(entity);
-    e.dataTransfer.setData("text/plain", entity.id);
+    e.dataTransfer.setData("text/plain", entity.Id.toString());
   };
-
   const handleEntityDragEnd = (e) => {
     setIsDragging(false);
     setDraggedEntity(null);
@@ -75,10 +74,10 @@ const canvasSize = { width: 1200, height: 800 };
     }
   };
 // Handle zone drop with magnetic snapping
-  const handleZoneDrop = (e, zone) => {
+const handleZoneDrop = (e, zone) => {
     e.preventDefault();
     const entityId = e.dataTransfer.getData("text/plain");
-    const entity = entities.find(e => e.Id === entityId);
+    const entity = entities.find(e => e.Id === parseInt(entityId));
     
     if (entity && entity.zone !== zone) {
       const rect = canvasRef.current.getBoundingClientRect();
@@ -215,10 +214,10 @@ const handleZoneDragOver = (e) => {
         />
 
         {/* Entities */}
-        <AnimatePresence>
+<AnimatePresence>
           {entities.map((entity) => (
             <motion.div
-              key={entity.id}
+              key={entity.Id}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
@@ -226,7 +225,7 @@ const handleZoneDragOver = (e) => {
               style={{
                 left: entity.position.x,
                 top: entity.position.y,
-                zIndex: selectedEntity?.id === entity.id ? 10 : 5,
+                zIndex: selectedEntity?.Id === entity.Id ? 10 : 5,
               }}
             >
 <EntityCard

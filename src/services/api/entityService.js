@@ -17,11 +17,11 @@ export const entityService = {
     return { ...entity };
   },
 
-  async create(entityData) {
+async create(entityData) {
     await new Promise(resolve => setTimeout(resolve, 300));
     const newEntity = {
       ...entityData,
-      Id: Math.max(...entities.map(e => e.Id), 0) + 1,
+      Id: entities.length > 0 ? Math.max(...entities.map(e => e.Id)) + 1 : 1,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

@@ -22,17 +22,16 @@ export const aiTipService = {
     return { ...tip };
   },
 
-  async create(tipData) {
+async create(tipData) {
     await new Promise(resolve => setTimeout(resolve, 300));
     const newTip = {
       ...tipData,
-      Id: Math.max(...aiTips.map(t => t.Id), 0) + 1,
+      Id: aiTips.length > 0 ? Math.max(...aiTips.map(t => t.Id)) + 1 : 1,
       createdAt: new Date().toISOString(),
     };
     aiTips.push(newTip);
     return { ...newTip };
   },
-
   async update(id, tipData) {
     await new Promise(resolve => setTimeout(resolve, 300));
     const index = aiTips.findIndex(t => t.Id === id);

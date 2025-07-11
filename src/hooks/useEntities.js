@@ -35,7 +35,7 @@ const useEntities = () => {
     }
   };
 
-  const updateEntity = async (id, entityData) => {
+const updateEntity = async (id, entityData) => {
     try {
       const updatedEntity = await entityService.update(id, entityData);
       setEntities(prev => prev.map(e => e.Id === id ? updatedEntity : e));
@@ -46,7 +46,7 @@ const useEntities = () => {
     }
   };
 
-  const deleteEntity = async (id) => {
+const deleteEntity = async (id) => {
     try {
       await entityService.delete(id);
       setEntities(prev => prev.filter(e => e.Id !== id));
